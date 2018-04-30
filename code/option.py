@@ -44,6 +44,7 @@ parser.add_argument("--valid_freq", default=50000, type=int)
 parser.add_argument("--max_to_keep", default=1000000, type=int)
 
 # Test setting
+parser.add_argument("--no_self_ensemble", action='store_true') 
 parser.add_argument("--is_test", action='store_true')
 parser.add_argument("--ckpt_name", default=None)
 	

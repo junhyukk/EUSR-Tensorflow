@@ -111,7 +111,7 @@ class Trainer():
         for (in_img, file_name) in zip(self.data.dataset[0], file_name_list):
             # inference 
             start_time = time.time()
-            if self.args.degrade:
+            if self.args.degrade or self.args.no_self_ensemble:
                 out_img = chop_forward(in_img, self.sess, self.model, scale=self.data.scale_list[0], shave=10)
                 
             # Only for Track 1, we use geometric self-ensemble
