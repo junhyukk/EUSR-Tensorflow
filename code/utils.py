@@ -26,7 +26,7 @@ def cal_psnr(out_img, tar_img, scale):
     return psnr
 
 def save_img(img, dir):
-    img = quantize(np.squeeze(img))
+    img = np.uint8(quantize(np.squeeze(img)))
     scipy.misc.imsave(dir, img)
 
 def mod_crop(img, scale):
