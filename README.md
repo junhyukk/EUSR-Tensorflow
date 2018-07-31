@@ -9,4 +9,3 @@ If you find this work useful in your research, please cite our work:
 	booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
 	year={2018}
 }
-'''
