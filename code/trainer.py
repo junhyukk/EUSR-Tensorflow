@@ -81,10 +81,7 @@ class Trainer():
                         scale = 4
 
                     valid_in_imgs = self.data.dataset[idx_scale][-self.args.num_valid:]
-                    if self.args.is_degrade:
-                        valid_tar_imgs = self.data.dataset[idx_scale+len(self.data.scale_list)][-self.args.num_valid:]
-                    else:
-                        valid_tar_imgs = self.data.dataset[-1][-self.args.num_valid:]
+                    valid_tar_imgs = self.data.dataset[-1][-self.args.num_valid:]
 
                     # inference validation images & calculate PSNR
                     psnr = 0

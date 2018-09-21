@@ -12,13 +12,8 @@ class Logger():
         if not args.is_test:
             self.summary_placeholders = {}
             self.summary_ops = {}
-
-            if self.args.is_degrade:
-                self.train_writer = [tf.summary.FileWriter(os.path.join(self.ckpt_dir, "train_%d" % degra)) for degra in self.degra_list]
-                self.valid_writer = [tf.summary.FileWriter(os.path.join(self.ckpt_dir, "valid_%d" % degra)) for degra in self.degra_list]
-            else:
-                self.train_writer = [tf.summary.FileWriter(os.path.join(self.ckpt_dir, "train_x%d" % scale)) for scale in self.scale_list]
-                self.valid_writer = [tf.summary.FileWriter(os.path.join(self.ckpt_dir, "valid_x%d" % scale)) for scale in self.scale_list]
+            self.train_writer = [tf.summary.FileWriter(os.path.join(self.ckpt_dir, "train_x%d" % scale)) for scale in self.scale_list]
+            self.valid_writer = [tf.summary.FileWriter(os.path.join(self.ckpt_dir, "valid_x%d" % scale)) for scale in self.scale_list]
         
             print("Logger is constructed!")
             

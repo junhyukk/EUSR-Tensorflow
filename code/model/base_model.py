@@ -7,7 +7,7 @@ class BaseModel:
         self.init_global_step()
         self.ckpt_dir = os.path.join(self.args.exp_dir, self.args.exp_name)
 
-    def conv(self, x, num_feats, kernel_size=[3,3], activation=None, kernel_initializer=None):
+    def conv(self, x, num_feats, kernel_size=[3,3], activation=None, kernel_initializer=None, name='conv'):
         if self.args.is_init_res:
             scale_list = list(map(lambda x: int(x), self.args.scale.split('+')))
             num_up = self.args.num_res + self.args.num_res_up * 4 * int(math.log(int(max(scale_list)), 2))
@@ -19,16 +19,53 @@ class BaseModel:
     def conv_xavier(self, x, num_feats, kernel_size, activation=None):
         return tf.layers.conv2d(x, num_feats, kernel_size, padding='same', activation=activation)
 
-    def res_block(self, x, num_feats, kernel_size, scale=1):
-        tmp = self.conv(x, num_feats, kernel_size, activation=tf.nn.relu)
+    def res_block(self, x, num_feats, kernel_size, name='RB', scale=1):
+        with tf.variable_scope(name):
+
+            tmp = self.conv(x, num_feats, kernel_size, activation=tf.nn.relu)
+            tmp = self.conv(tmp, num_feats, kernel_size)
+
+            if self.args.is_CA:
+                tmp = self.channel_attention(tmp)
+            
+            if self.args.is_SA:
+                tmp = self.spatial_attention(tmp)
+            tmp *= scale
+        return x + tmp
+
+    def res_block_b(self, x, num_feats, kernel_size, scale=0.1):
+        tmp = self.conv(x, num_feats//2, kernel_size, activation=tf.nn.relu)
         tmp = self.conv(tmp, num_feats, kernel_size)
         tmp *= scale
         return x + tmp
+
+    def channel_attention(self, x, ratio=16):
+        with tf.variable_scope('CA'):
+            tmp1 = tf.reduce_mean(x, axis=[1,2], keepdims=True)
+            tmp1 = tf.layers.dense(tmp1, self.args.num_feats//ratio, tf.nn.relu, name='mlp_1', reuse=None)
+            tmp1 = tf.layers.dense(tmp1, self.args.num_feats, name='mlp_2', reuse=None)
+
+            tmp2 = tf.reduce_max(x, axis=[1,2], keepdims=True)
+            tmp2 = tf.layers.dense(tmp2, self.args.num_feats//ratio, tf.nn.relu, name='mlp_1', reuse=True)
+            tmp2 = tf.layers.dense(tmp2, self.args.num_feats, name='mlp_2', reuse=True)
+
+            scale = tf.sigmoid(tmp1 + tmp2)
+        return x * scale
+
+    def spatial_attention(self, x):
+        tmp1 = tf.reduce_mean(x, axis=[3], keepdims=True)
+        tmp2 = tf.reduce_max(x, axis=[3], keepdims=True)
+        tmp = tf.concat([tmp1,tmp2], axis=3)
+
+        tmp = self.conv(tmp, 1, [7,7])
+        
+        scale = tf.sigmoid(tmp)
+        return x * scale
        
     def res_module(self, x, num_feats, num_res):
         before_res = x
         for _ in range(num_res):
-            x = self.res_block(x, num_feats, [3,3])
+            x = self.res_block(x, num_feats, [3,3], name='RB_' + str(_))
         x = self.conv_xavier(x, num_feats, [3,3])
         return before_res + x
 
@@ -53,17 +90,23 @@ class BaseModel:
 
     # Method to upscale an image using conv2d transpose.
     def upsampler(self, x, scale):
-        if (scale & (scale - 1)) == 0:
-            for _ in range(int(math.log(scale, 2))):
-                x_list = list()
-                for _ in range(4):
-                    x = self.res_module(x, self.args.num_feats, self.args.num_res_up)
-                    x_list.append(x)
-                x = tf.concat(x_list, axis=3)
-                x = tf.depth_to_space(x, 2)
-            return x 
-        else:
-            raise NotImplementedError              
+        with tf.variable_scope('upsampler_' + str(scale)):
+            if (scale & (scale - 1)) == 0:
+                for _ in range(int(math.log(scale, 2))):
+                    with tf.variable_scope('EUM_'+str(_)):
+                        x_list = list()
+                        for _ in range(4):
+                            with tf.variable_scope('RM_'+str(_)):
+                                if self.args.is_resbup:
+                                    x = self.res_block_b(x, self.args.num_feats, [3,3])
+                                else:
+                                    x = self.res_module(x, self.args.num_feats, self.args.num_res_up)
+                                x_list.append(x)
+                        x = tf.concat(x_list, axis=3)
+                        x = tf.depth_to_space(x, 2)
+                return x 
+            else:
+                raise NotImplementedError              
 
     # save function thet save the checkpoint in the path defined in argsfile
     def save(self, sess):
@@ -84,7 +127,6 @@ class BaseModel:
 
     # just inialize a tensorflow variable to use it as global step counter
     def init_global_step(self):
-        # DON'T forget to add the global step tensor to the tensorflow trainer
         with tf.variable_scope('global_step'):
             self.global_step = tf.Variable(0, trainable=False, name='global_step')
 

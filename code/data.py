@@ -18,16 +18,20 @@ class DataGenerator():
 
         if self.args.is_test:
             # directories for LR (for scale used)
-            if not self.args.degrade:
-                dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_bicubic/X%d" % scale) for scale in self.scale_list]
-            elif int(self.args.degrade) == 1:
-                dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_mild")]
-            elif int(self.args.degrade) == 2:
-                dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_difficult")]
-            elif int(self.args.degrade) == 3:
-                dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_wild")]
+            if self.args.data_dir == "Z:/Dataset/SR_test":
+                dirs = [os.path.join(self.args.data_dir, "LR", "x%d" % scale, self.args.dataset_name) for scale in self.scale_list]
+                dirs.append(os.path.join(self.args.data_dir, "HR", self.args.dataset_name))
             else:
-                raise NotImplementedError
+                if not self.args.degrade:
+                    dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_bicubic/X%d" % scale) for scale in self.scale_list]
+                elif int(self.args.degrade) == 1:
+                    dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_mild")]
+                elif int(self.args.degrade) == 2:
+                    dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_difficult")]
+                elif int(self.args.degrade) == 3:
+                    dirs = [os.path.join(self.args.data_dir, "DIV2K_test_LR_wild")]
+                else:
+                    raise NotImplementedError
 
             # The list of file_names for each directory 
             self.file_names_for_dirs = [sorted([f for f in os.listdir(dir) if not f=='Thumbs.db']) for dir in dirs]
@@ -73,7 +77,7 @@ class DataGenerator():
 
     # construct batch data for randomly selected scale or degradation level
     # only use this function during traing, not validation, not testing 
-    def get_batch(self, batch_size, idx_scale, in_patch_size=32):
+    def get_batch(self, batch_size, idx_scale, in_patch_size=48):
         # randomly selet scale
         scale = self.scale_list[idx_scale]
 

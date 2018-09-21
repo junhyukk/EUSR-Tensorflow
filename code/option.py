@@ -19,6 +19,10 @@ parser.add_argument("--num_res", default=16, type=int)
 parser.add_argument("--num_res_up", default=1, type=int)
 parser.add_argument("--is_init_res", action='store_true')
 parser.add_argument("--is_init_he", action='store_true')
+parser.add_argument("--is_CA", action='store_true')
+parser.add_argument("--is_SA", action='store_true')
+parser.add_argument("--is_resbup", action='store_true')
+
 
 # Training / Test / Restore 
 parser.add_argument("--is_resume", action='store_true')
@@ -39,13 +43,14 @@ parser.add_argument("--num_test", default=100, type=int)
 # Saver & Logger specifications
 parser.add_argument("--print_freq", default=10, type=int)
 parser.add_argument("--log_freq", default=100, type=int)
-parser.add_argument("--save_freq", default=1000, type=int)
-parser.add_argument("--valid_freq", default=50000, type=int)
+parser.add_argument("--save_freq", default=50000, type=int)
+parser.add_argument("--valid_freq", default=200000, type=int)
 parser.add_argument("--max_to_keep", default=1000000, type=int)
 
 # Test setting
 parser.add_argument("--no_self_ensemble", action='store_true') 
 parser.add_argument("--is_test", action='store_true')
 parser.add_argument("--ckpt_name", default=None)
+parser.add_argument("--dataset_name", default='Set5')
 	
 args = parser.parse_args()

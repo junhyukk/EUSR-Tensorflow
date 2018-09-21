@@ -23,6 +23,9 @@ class EUSR(BaseModel):
 		scale_specific_module = self.scale_specific_module
 		scale_specific_upsampler = self.scale_specific_upsampler
 
+		# check scales used in experiment
+		scale_list = list(map(lambda x: int(x), self.args.scale.split('+')))
+
 		# Placeholder for input, target, and flag_scale
 		self.input = tf.placeholder(tf.float32, [None, None, None, 3])
 		self.target = tf.placeholder(tf.float32, [None, None, None, 3])
@@ -36,17 +39,21 @@ class EUSR(BaseModel):
 		x = conv(in_img, num_feats, [3,3])
 
         # Scale-specific processing module
-		x = tf.cond(tf.equal(self.flag_scale, 2), lambda: scale_specific_module(x, num_feats, [5,5]), \
-        lambda: tf.cond(tf.equal(self.flag_scale, 4), lambda: scale_specific_module(x, num_feats, [5,5]), \
-        lambda: scale_specific_module(x, num_feats, [5,5])))    
+		if len(scale_list) > 1:
+			x = tf.cond(tf.equal(self.flag_scale, 2), lambda: scale_specific_module(x, num_feats, [5,5]), \
+	        lambda: tf.cond(tf.equal(self.flag_scale, 4), lambda: scale_specific_module(x, num_feats, [5,5]), \
+	        lambda: scale_specific_module(x, num_feats, [5,5])))
 
 		# Main branch
 		x = res_module(x, num_feats, num_res)
 
-		# Scale-speficifc up-sampling 
-		x = tf.cond(tf.equal(self.flag_scale, 2), lambda: scale_specific_upsampler(x, 2), \
-		lambda: tf.cond(tf.equal(self.flag_scale, 4), lambda: scale_specific_upsampler(x, 4), \
-		lambda: scale_specific_upsampler(x, 8)))
+		# Scale-speficifc up-sampling
+		if len(scale_list) > 1: 
+			x = tf.cond(tf.equal(self.flag_scale, 2), lambda: scale_specific_upsampler(x, 2), \
+			lambda: tf.cond(tf.equal(self.flag_scale, 4), lambda: scale_specific_upsampler(x, 4), \
+			lambda: scale_specific_upsampler(x, 8)))
+		else:
+			x = scale_specific_upsampler(x, int(self.args.scale))
 
 		# Post-processing
 		self.output = mean_shift(x, is_add=True) 
