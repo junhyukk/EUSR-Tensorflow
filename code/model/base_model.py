@@ -41,11 +41,11 @@ class BaseModel:
 
     def channel_attention(self, x, ratio=16):
         with tf.variable_scope('CA'):
-            tmp1 = tf.reduce_mean(x, axis=[1,2], keepdims=True)
+            tmp1 = tf.reduce_mean(x, axis=[1,2], keep_dims=True)
             tmp1 = tf.layers.dense(tmp1, self.args.num_feats//ratio, tf.nn.relu, name='mlp_1', reuse=None)
             tmp1 = tf.layers.dense(tmp1, self.args.num_feats, name='mlp_2', reuse=None)
 
-            tmp2 = tf.reduce_max(x, axis=[1,2], keepdims=True)
+            tmp2 = tf.reduce_max(x, axis=[1,2], keep_dims=True)
             tmp2 = tf.layers.dense(tmp2, self.args.num_feats//ratio, tf.nn.relu, name='mlp_1', reuse=True)
             tmp2 = tf.layers.dense(tmp2, self.args.num_feats, name='mlp_2', reuse=True)
 
@@ -53,8 +53,8 @@ class BaseModel:
         return x * scale
 
     def spatial_attention(self, x):
-        tmp1 = tf.reduce_mean(x, axis=[3], keepdims=True)
-        tmp2 = tf.reduce_max(x, axis=[3], keepdims=True)
+        tmp1 = tf.reduce_mean(x, axis=[3], keep_dims=True)
+        tmp2 = tf.reduce_max(x, axis=[3], keep_dims=True)
         tmp = tf.concat([tmp1,tmp2], axis=3)
 
         tmp = self.conv(tmp, 1, [7,7])

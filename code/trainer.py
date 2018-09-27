@@ -1,7 +1,7 @@
 import tensorflow as tf
 import time, os
 import numpy as np
-from utils import cal_psnr, chop_forward, save_img, mod_crop
+from utils import cal_psnr, chop_forward, save_img, mod_crop, create_dirs
 
 class Trainer():
     def __init__(self, sess, model, data, logger, args):
@@ -131,11 +131,13 @@ class Trainer():
             mean_runtime += (end_time - start_time) / self.args.num_test
 
             # save images
-            dir_img = os.path.join(self.args.exp_dir, self.args.exp_name, 'results', file_name)
+            dir_img_ = os.path.join(self.args.exp_dir, self.args.exp_name, 'results', self.args.dataset_name)
+            create_dirs([dir_img_])
+            dir_img = os.path.join(dir_img_, file_name)
             save_img(out_img, dir=dir_img)
 
         # write text file for summarize results
-        dir_file = os.path.join(self.args.exp_dir, self.args.exp_name, 'results', 'results.txt')
+        dir_file = os.path.join(self.args.exp_dir, self.args.exp_name, 'results', self.args.dataset_name, 'results.txt')
         with open(dir_file, "w") as f:
             f.write("runtime per image [s] : {0:2.2f}\n".format(mean_runtime))
             f.write("CPU[1] / GPU[0] : 0\n")
